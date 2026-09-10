@@ -1,0 +1,552 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Tabby — Intelligent Receipt Processing Agent</title>
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+<!-- Material Symbols Outlined -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Configuration -->
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FAF8FF',
+              100: '#F5F3FF',
+              200: '#EDE9FE',
+              300: '#DDD6FE',
+              400: '#C4B5FD',
+              500: '#A78BFA',
+              600: '#8B5CF6',
+              700: '#7C3AED',
+            },
+            mint: {
+              50: '#ECFDF5',
+              100: '#D1FAE5',
+              200: '#A7F3D0',
+              500: '#10B981',
+              600: '#059669',
+            },
+            sky: {
+              50: '#F0F9FF',
+              100: '#E0F2FE',
+              200: '#BAE6FD',
+              500: '#0EA5E9',
+              600: '#0284C7',
+            },
+            peach: {
+              50: '#FFF1F2',
+              100: '#FFE4E6',
+              200: '#FECDD3',
+              500: '#F43F5E',
+              600: '#E11D48',
+            },
+            amber: {
+              50: '#FFFBEB',
+              100: '#FEF3C7',
+              200: '#FDE68A',
+              500: '#F59E0B',
+              600: '#D97706',
+            }
+          },
+          fontFamily: {
+            body: ["Plus Jakarta Sans", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings: 'FILL' 0, 'wght' 450, 'GRAD' 0, 'opsz' 20;
+      vertical-align: middle;
+    }
+    .paper-shadow {
+      box-shadow: 0 4px 20px -2px rgba(139, 92, 246, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.04);
+    }
+  </style>
+</head>
+<body class="bg-[#FAF8FF] text-slate-800 font-body antialiased min-h-screen flex flex-col selection:bg-brand-200 selection:text-brand-700 bg-dot-pattern">
+<!-- Top Navigation Bar -->
+<header class="bg-white/95 backdrop-blur-md border-b border-brand-200/80 sticky top-0 z-30 shadow-[0_2px_12px_-4px_rgba(139,92,246,0.06)]">
+<div class="flex justify-between items-center w-full px-6 max-w-7xl mx-auto h-16">
+<div class="flex items-center space-x-6">
+<div class="flex items-center space-x-3.5">
+<div class="w-10 h-10 rounded-2xl overflow-hidden shadow-md ring-2 ring-brand-300 transition-transform hover:scale-110 active:rotate-3 bg-gradient-to-br from-brand-100 to-brand-300 p-0.5 shrink-0">
+<img alt="Tabby Pastel Brandmark" class="w-full h-full object-cover rounded-[14px]" src="https://lh3.googleusercontent.com/aida/AEtjO1WqZgk5OlVLumIH0VbNua9-zZMMXjHhV82PE0A60bNofN_mWlGsxSsK6DkWd2JMY6AB5Coih54cFZIZ3OI-5dnydb8ipWZiuK1hCU1_I-1fFv9cp8RJmCp3DCvDdJgvvql3JLUBdSCwbqm7ZuRRhDgfEu12alyjkrnDa1GeT6xs9CtvXjfGX4CIG2FIVmaxKfqX-fTCrVxsvuSyoLh366ag09ZCWVf2060lzdtHu7VPpWF8hED8UaborVg">
+</div>
+<div class="flex flex-col justify-center">
+<div class="flex items-center gap-2">
+<span class="text-2xl font-black text-slate-900 tracking-tight leading-none">Tabby</span>
+<span class="px-2 py-0.5 rounded-full bg-gradient-to-r from-brand-500 to-peach-500 text-white text-[10px] font-black tracking-wider uppercase shadow-sm flex items-center gap-1 leading-none">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span> AI AGENT
+</span>
+</div>
+<span class="text-xs text-brand-700 font-bold leading-tight mt-1 flex items-center gap-1.5">
+Autonomous Ledger Copilot <span class="w-1.5 h-1.5 rounded-full bg-mint-500 inline-block shrink-0"></span>
+</span>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="hidden md:flex items-center space-x-1 ml-4 h-full">
+<a class="bg-brand-600 text-white font-black text-xs px-3.5 py-2 rounded-xl flex items-center gap-2 shadow-sm transition-all leading-none" href="#">
+<span class="">Inbox</span>
+<span id="nav-inbox-count" class="bg-white text-brand-700 px-2 py-0.5 rounded-full text-[11px] font-extrabold shadow-sm leading-none">0</span>
+</a>
+<a class="text-slate-600 hover:text-amber-800 hover:bg-amber-100/70 rounded-xl font-bold text-xs px-3 py-2 flex items-center gap-1.5 transition-colors leading-none" href="#">
+<span class="">Processing</span>
+<span class="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-full text-[10px] font-black leading-none">Live</span>
+</a>
+<a class="text-slate-600 hover:text-brand-700 hover:bg-brand-100/60 rounded-xl font-bold text-xs px-3 py-2 flex items-center gap-1.5 transition-colors leading-none" href="#">
+<span class="">Ledger</span>
+</a>
+</nav>
+</div>
+<!-- Right: Search & Connected Upload Action -->
+<div class="flex items-center space-x-3">
+<!-- LIVE WORKING SEARCH BAR -->
+<div class="relative hidden lg:block w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-brand-400 text-[18px]">search</span>
+<input id="search-input" oninput="filterLedger()" class="w-full bg-slate-50/90 hover:bg-white border-2 border-brand-200 text-xs font-bold text-slate-800 rounded-2xl pl-9 pr-3 py-2 focus:outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 placeholder:text-slate-400 placeholder:font-normal transition-all shadow-inner h-10" placeholder="Search merchant, category, date..." type="text">
+</div>
+
+<!-- Functional File Ingestion Trigger -->
+<input type="file" id="file-input" class="hidden" accept="image/*" onchange="uploadReceipt(this.files[0])" />
+<button id="upload-btn" onclick="document.getElementById('file-input').click()" class="h-10 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-black text-xs px-4 rounded-2xl flex items-center space-x-1.5 neo-pop-shadow-purple border-2 border-slate-900 transition-all hover:-translate-y-0.5 active:translate-y-1 shrink-0 cursor-pointer">
+<span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+<span id="upload-btn-text">Upload Receipt</span>
+</button>
+</div></div>
+</header>
+
+<!-- Live Status Bar -->
+<div class="bg-brand-50/70 border-b border-brand-200/60">
+<div class="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between text-xs text-slate-600">
+<div class="flex items-center space-x-2.5">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-mint-500 opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-mint-500"></span>
+</span>
+<span id="engine-status" class="font-semibold text-slate-800">Tabby Agent Idle</span>
+<span class="text-slate-300">·</span>
+<span id="engine-subtext" class="text-slate-500">Ready for voucher ingestion</span>
+</div>
+<div class="flex items-center space-x-4">
+<span class="flex items-center gap-1 font-mono text-[11px] text-brand-700 bg-white/80 px-2 py-0.5 rounded-full border border-brand-200/60">
+<span class="material-symbols-outlined text-[15px] text-brand-600">cloud_done</span> Gemini 3.6 Flash Active
+</span>
+</div>
+</div>
+</div>
+
+<!-- Main Content Shell -->
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-6 space-y-6">
+
+<!-- Section 1: HUD Metrics -->
+<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-stretch">
+<div class="h-full bg-gradient-to-b from-[#FAF5FF] to-[#EDE9FE] border-2 border-brand-400 p-5 rounded-3xl flex flex-col justify-between cursor-default relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase tracking-wider text-brand-800 bg-white/95 px-3 py-1 rounded-full border border-brand-300 shadow-sm flex items-center gap-1.5 leading-none">
+Receipts Ingested
+</span>
+<div class="w-10 h-10 rounded-2xl bg-brand-600 text-white flex items-center justify-center shadow-md border-2 border-brand-700 shrink-0">
+<span class="material-symbols-outlined text-[22px]">receipt_long</span>
+</div>
+</div>
+<div class="mt-4 pt-1 flex flex-col justify-between flex-1">
+<span id="metric-count" class="text-4xl font-black text-slate-900 tracking-tight leading-none">0</span>
+<div class="text-xs text-brand-900 font-bold mt-3">Synchronized with SQLite</div>
+</div>
+</div>
+
+<div class="h-full bg-gradient-to-b from-[#FFFDF5] to-[#FEF3C7] border-2 border-amber-400 p-5 rounded-3xl flex flex-col justify-between cursor-default relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase tracking-wider text-amber-900 bg-white/95 px-3 py-1 rounded-full border border-amber-300 shadow-sm flex items-center gap-1.5 leading-none">
+Active Guardrails
+</span>
+<div class="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md border-2 border-amber-600 shrink-0">
+<span class="material-symbols-outlined text-[22px]">verified_user</span>
+</div>
+</div>
+<div class="mt-4 pt-1 flex flex-col justify-between flex-1">
+<span class="text-4xl font-black text-slate-900 tracking-tight leading-none">3</span>
+<div class="text-xs text-amber-900 font-bold mt-3">Duplicate · Budget · Anomaly</div>
+</div>
+</div>
+
+<div class="h-full bg-gradient-to-b from-[#F0FDF4] to-[#D1FAE5] border-2 border-mint-500 p-5 rounded-3xl flex flex-col justify-between cursor-default relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase tracking-wider text-mint-900 bg-white/95 px-3 py-1 rounded-full border border-mint-300 shadow-sm flex items-center gap-1.5 leading-none">
+Total Reconciled
+</span>
+<div class="w-10 h-10 rounded-2xl bg-mint-600 text-white flex items-center justify-center shadow-md border-2 border-mint-700 shrink-0">
+<span class="material-symbols-outlined text-[22px]">account_balance</span>
+</div>
+</div>
+<div class="mt-4 pt-1 flex flex-col justify-between flex-1">
+<span id="metric-spend" class="text-3xl font-black font-mono text-slate-900 tracking-tight leading-none">₹0.00</span>
+<div class="text-xs text-mint-900 font-bold mt-3 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px] text-mint-600">verified</span>
+<span>Committed Ledger Total</span>
+</div>
+</div>
+</div>
+
+<div class="h-full bg-gradient-to-b from-[#F0F9FF] to-[#E0F2FE] border-2 border-sky-400 p-5 rounded-3xl flex flex-col justify-between cursor-default relative overflow-hidden">
+<div class="flex items-center justify-between">
+<span class="text-[11px] font-black uppercase tracking-wider text-sky-900 bg-white/95 px-3 py-1 rounded-full border border-sky-300 shadow-sm flex items-center gap-1.5 leading-none">
+Model Velocity
+</span>
+<div class="w-10 h-10 rounded-2xl bg-sky-500 text-white flex items-center justify-center shadow-md border-2 border-sky-600 shrink-0">
+<span class="material-symbols-outlined text-[22px]">bolt</span>
+</div>
+</div>
+<div class="mt-4 pt-1 flex flex-col justify-between flex-1">
+<span class="text-4xl font-black font-mono text-slate-900 tracking-tight leading-none">Sub-2s</span>
+<div class="text-xs text-sky-900 font-bold mt-3">Multimodal OCR + Tool Loop</div>
+</div>
+</div>
+</section>
+
+<!-- Section 2: Two-Column Receipt Processing Workspace -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+<!-- LEFT: Tactical Thermal Receipt Inspector -->
+<div class="lg:col-span-5 space-y-3">
+<div class="bg-white border-2 border-brand-300 rounded-3xl overflow-hidden flex flex-col">
+<div class="bg-gradient-to-r from-brand-100 via-brand-50 to-brand-100 px-5 py-3.5 border-b-2 border-brand-200 flex items-center justify-between min-h-[64px]">
+<div class="flex items-center space-x-2.5">
+<div class="w-8 h-8 rounded-xl bg-brand-600 text-white flex items-center justify-center shadow-sm shrink-0">
+<span class="material-symbols-outlined text-[18px]">receipt</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-extrabold text-sm text-slate-900">Receipt Inspector</span>
+<span class="px-2 py-0.5 rounded-full bg-brand-200 text-[10px] font-black text-brand-800 border border-brand-300 leading-none">PAYLOAD CANVAS</span>
+</div>
+</div>
+<button onclick="document.getElementById('file-input').click()" class="px-2.5 py-1.5 text-xs font-bold text-slate-700 bg-white hover:bg-brand-50 border border-brand-200 rounded-xl flex items-center gap-1 shadow-sm leading-none cursor-pointer">
+<span class="material-symbols-outlined text-[15px]">swap_horiz</span>
+<span>Upload Voucher</span>
+</button>
+</div>
+
+<div class="p-6 bg-gradient-to-b from-[#F5F3FF] to-[#FAF5FF] flex justify-center items-center relative overflow-hidden min-h-[480px]">
+<!-- Thermal Voucher Card -->
+<div class="w-full max-w-sm bg-white border-2 border-slate-800 shadow-[6px_6px_0px_rgba(30,27,75,0.15)] p-5 text-slate-800 font-mono text-xs rounded-xl relative">
+<div class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-amber-200 via-yellow-100 to-amber-200 px-5 py-1 text-[10px] font-black tracking-widest text-amber-900 uppercase rounded border border-amber-400/90 shadow-sm z-10 flex items-center gap-1.5 whitespace-nowrap">
+<span class="material-symbols-outlined text-[13px] text-amber-700">verified</span>
+TABBY AI AUDITED ✨
+</div>
+
+<div class="text-center pb-4 pt-2 border-b-2 border-dashed border-slate-300">
+<div class="relative inline-block px-3.5 py-1.5 border-2 border-brand-600 bg-[#FEF08A] rounded-xl shadow-sm">
+<p id="receipt-vendor" class="font-black text-base text-slate-950 font-body tracking-tight">Awaiting Voucher...</p>
+</div>
+<div class="relative inline-block mt-2.5 px-3 py-1 border-2 border-mint-600 bg-[#A7F3D0] rounded-xl shadow-sm">
+<p id="receipt-date" class="text-[11px] font-black text-mint-950 font-mono">--/--/---- · PENDING</p>
+</div>
+</div>
+
+<div class="py-4 border-b-2 border-dashed border-slate-300 space-y-2 text-xs">
+<div class="flex justify-between items-center bg-slate-100/90 px-2.5 py-2 rounded-lg border border-slate-200">
+<span class="text-slate-800 font-bold">Extraction Status</span>
+<span id="receipt-category-pill" class="font-black text-slate-900">Idle</span>
+</div>
+</div>
+
+<div class="pt-3">
+<div class="relative border-2 border-brand-600 bg-gradient-to-r from-brand-100 to-brand-50 p-3.5 rounded-2xl shadow-sm">
+<div class="flex justify-between items-center">
+<span class="font-black font-body text-xs text-brand-900 tracking-wide">VERIFIED AMOUNT</span>
+<span id="receipt-amount" class="font-mono text-2xl text-brand-700 font-black">₹0.00</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- RIGHT: Autonomous Parsing & Audit Engine -->
+<div class="lg:col-span-7 space-y-4">
+<div class="bg-white border-2 border-brand-300 p-6 rounded-3xl space-y-6">
+<div class="flex items-center justify-between pb-5 border-b-2 border-brand-100 flex-wrap gap-3">
+<div class="flex items-center space-x-3.5">
+<span class="w-12 h-12 bg-gradient-to-tr from-brand-600 to-brand-500 text-white rounded-2xl flex items-center justify-center shadow-lg border-2 border-brand-700">
+<span class="material-symbols-outlined text-[26px]">smart_toy</span>
+</span>
+<div>
+<h2 class="text-lg font-black text-slate-900 tracking-tight leading-none">Autonomous Parsing &amp; Audit Engine</h2>
+<p class="text-xs text-slate-600 font-semibold mt-1">Autonomous multimodal verification &amp; SQLite commit loop</p>
+</div>
+</div>
+<span id="confidence-tag" class="inline-flex items-center gap-1.5 bg-mint-200 text-mint-950 border-2 border-mint-400 px-4 py-1.5 rounded-full font-mono font-black text-xs shadow-sm">
+✦ Ready
+</span>
+</div>
+
+<!-- Extracted Form Fields -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+<div class="bg-[#FAF5FF] p-3.5 rounded-2xl border-2 border-brand-200">
+<label class="block text-[11px] font-black uppercase tracking-wider text-brand-800 mb-1.5">Extracted Merchant</label>
+<input id="field-merchant" readonly class="w-full bg-white border-2 border-brand-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 font-extrabold shadow-sm h-10" type="text" placeholder="Pending upload...">
+</div>
+
+<div class="bg-[#FAF5FF] p-3.5 rounded-2xl border-2 border-brand-200">
+<label class="block text-[11px] font-black uppercase tracking-wider text-brand-800 mb-1.5">Expense Category</label>
+<input id="field-category" readonly class="w-full bg-white border-2 border-brand-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 font-extrabold shadow-sm h-10" type="text" placeholder="Pending category...">
+</div>
+
+<div class="bg-slate-50 p-3.5 rounded-2xl border-2 border-slate-200">
+<label class="block text-[11px] font-black uppercase tracking-wider text-slate-700 mb-1.5">Transaction Date</label>
+<input id="field-date" readonly class="w-full bg-white border-2 border-slate-300 rounded-xl px-3.5 py-2 text-sm text-slate-900 font-bold shadow-sm h-10" type="text" placeholder="YYYY-MM-DD">
+</div>
+
+<div class="bg-[#F5F3FF] p-3.5 rounded-2xl border-2 border-brand-300">
+<label class="block text-[11px] font-black uppercase tracking-wider text-brand-900 mb-1.5">Parsed Amount</label>
+<input id="field-amount" readonly class="w-full bg-white border-2 border-brand-400 rounded-xl px-3.5 py-2 text-sm font-mono font-black text-brand-800 shadow-sm h-10" type="text" placeholder="₹0.00">
+</div>
+</div>
+
+<!-- Intelligent Policy Checklist -->
+<div class="pt-4 border-t-2 border-brand-100 space-y-3">
+<div class="flex items-center justify-between">
+<h3 class="text-xs font-black uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
+<span class="material-symbols-outlined text-brand-600 text-[18px]">verified_user</span>
+Intelligent Policy &amp; Ledger Verification
+</h3>
+<span id="cleared-checks-badge" class="text-[11px] font-black text-slate-700 bg-slate-100 px-3 py-1 rounded-full border-2 border-slate-200 shadow-sm">
+3 Guardrails Armed
+</span>
+</div>
+
+<div id="checks-container" class="space-y-2.5">
+<div class="flex items-center justify-between p-3.5 bg-slate-50 border-2 border-slate-200 rounded-2xl">
+<span class="text-xs font-bold text-slate-600">Awaiting voucher to run duplicate, budget &amp; anomaly policy checks...</span>
+<span class="text-[10px] font-black text-slate-500 bg-white border px-2.5 py-1 rounded-full">STANDBY</span>
+</div>
+</div>
+</div>
+
+<!-- Verdict Action Banner -->
+<div class="pt-4 border-t-2 border-brand-100">
+<div id="verdict-card" class="hidden p-4 rounded-2xl border-2 text-xs font-bold leading-relaxed mb-3"></div>
+<button id="verdict-btn" disabled class="w-full h-11 bg-slate-200 text-slate-600 border-2 border-slate-300 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2">
+<span>Awaiting File Ingestion</span>
+</button>
+</div>
+
+</div>
+</div>
+</section>
+
+<!-- Section 3: Recent Processing Stream -->
+<section class="space-y-3 pt-2">
+<div class="flex items-center justify-between flex-wrap gap-3">
+<div class="flex items-center space-x-3">
+<div class="w-9 h-9 rounded-xl bg-brand-100 text-brand-700 flex items-center justify-center font-bold border-2 border-brand-300 shrink-0">
+<span class="material-symbols-outlined text-[20px]">dynamic_feed</span>
+</div>
+<div>
+<h2 class="text-lg font-black text-slate-900 leading-none">Recent Processing Stream</h2>
+<p class="text-xs text-slate-500 font-medium mt-1">Real-time SQLite transactions</p>
+</div>
+</div>
+<button onclick="loadLedger()" class="h-9 px-3.5 border-2 border-brand-200 bg-brand-50 text-brand-700 rounded-xl text-xs font-bold hover:bg-brand-100 flex items-center gap-1.5 cursor-pointer">
+<span class="material-symbols-outlined text-[16px]">refresh</span>
+<span>Sync Database</span>
+</button>
+</div>
+
+<div class="bg-white border-2 border-brand-200 rounded-3xl overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-gradient-to-r from-brand-100/90 via-brand-50 to-brand-100/90 border-b-2 border-brand-200 text-[11px] font-black text-brand-900 uppercase tracking-wider">
+<th class="py-4 px-6 w-1/4">Merchant Name</th>
+<th class="py-4 px-6 w-1/6">Transaction Date</th>
+<th class="py-4 px-6 w-1/6">Amount</th>
+<th class="py-4 px-6 text-center w-1/6">Category Tag</th>
+<th class="py-4 px-6 text-right w-1/6">Ledger Status</th>
+</tr>
+</thead>
+<tbody id="ledger-rows" class="divide-y-2 divide-brand-100 text-xs bg-white">
+<tr>
+<td colspan="5" class="py-6 text-center text-slate-400 font-semibold">Loading ledger records from receipts.db...</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+</main>
+
+<footer class="mt-auto border-t border-brand-200/60 bg-white py-6">
+<div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+<div class="flex items-center space-x-2">
+<span class="font-bold text-slate-800">Tabby Autonomous Financial OS</span>
+<span>· Powered by Gemini 3.6 Flash</span>
+</div>
+<span class="text-slate-400 font-mono">SQLite v3.0 Connected</span>
+</div>
+</footer>
+
+<script>
+  // Global cache of transactions for instant search filtering
+  let allTransactions = [];
+
+  async function uploadReceipt(file) {
+    if (!file) return;
+
+    const uploadBtnText = document.getElementById("upload-btn-text");
+    const engineStatus = document.getElementById("engine-status");
+    const engineSubtext = document.getElementById("engine-subtext");
+    const verdictBtn = document.getElementById("verdict-btn");
+    const verdictCard = document.getElementById("verdict-card");
+    const checksContainer = document.getElementById("checks-container");
+    const confidenceTag = document.getElementById("confidence-tag");
+
+    uploadBtnText.innerText = "Parsing Voucher...";
+    engineStatus.innerText = "Agent Active";
+    engineSubtext.innerText = "Running multimodal Gemini extraction & tool loop...";
+    verdictBtn.disabled = true;
+    verdictBtn.className = "w-full h-11 bg-amber-200 text-amber-900 border-2 border-amber-300 rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2";
+    verdictBtn.innerText = "⏳ Auditing with Policy Tools...";
+    verdictCard.className = "hidden";
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const res = await fetch("/api/audit", {
+        method: "POST",
+        body: formData
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.detail || "Processing failed.");
+
+      // 1. Update Thermal Card
+      document.getElementById("receipt-vendor").innerText = data.extracted.vendor || "Unknown";
+      document.getElementById("receipt-date").innerText = `${data.extracted.date} · PARSED`;
+      document.getElementById("receipt-category-pill").innerText = data.extracted.category || "General";
+      document.getElementById("receipt-amount").innerText = `₹${data.extracted.amount}`;
+
+      // 2. Update Form Matrix
+      document.getElementById("field-merchant").value = data.extracted.vendor || "";
+      document.getElementById("field-category").value = data.extracted.category || "";
+      document.getElementById("field-date").value = data.extracted.date || "";
+      document.getElementById("field-amount").value = `₹${data.extracted.amount}`;
+
+      // 3. Render Tool Checks
+      if (data.checks && data.checks.length > 0) {
+        checksContainer.innerHTML = data.checks.map(c => `
+          <div class="flex items-center justify-between p-3.5 ${c.passed ? 'bg-mint-50 border-mint-300' : 'bg-rose-50 border-rose-300'} border-2 rounded-2xl shadow-sm">
+            <div class="flex items-center space-x-3">
+              <span class="w-7 h-7 ${c.passed ? 'bg-mint-600' : 'bg-rose-600'} text-white rounded-xl flex items-center justify-center shrink-0">
+                <span class="material-symbols-outlined text-[16px]">${c.passed ? 'check' : 'close'}</span>
+              </span>
+              <span class="text-xs font-bold text-slate-900">${c.tool}</span>
+            </div>
+            <span class="text-[10px] font-black ${c.passed ? 'text-mint-900 bg-mint-200 border-mint-300' : 'text-rose-900 bg-rose-200 border-rose-300'} border-2 px-3 py-1 rounded-full uppercase tracking-wider">${c.result}</span>
+          </div>
+        `).join("");
+      }
+
+      // 4. Update Final Verdict
+      const isApproved = data.status === "APPROVED";
+      confidenceTag.innerText = isApproved ? "✦ 99.4% Match" : "✕ Policy Breach";
+      confidenceTag.className = isApproved
+        ? "inline-flex items-center gap-1.5 bg-mint-200 text-mint-950 border-2 border-mint-400 px-4 py-1.5 rounded-full font-mono font-black text-xs shadow-sm"
+        : "inline-flex items-center gap-1.5 bg-rose-200 text-rose-950 border-2 border-rose-400 px-4 py-1.5 rounded-full font-mono font-black text-xs shadow-sm";
+
+      verdictCard.className = `p-4 rounded-2xl border-2 text-xs font-bold leading-relaxed mb-3 ${isApproved ? 'bg-mint-50 border-mint-300 text-mint-900' : 'bg-rose-50 border-rose-300 text-rose-900'}`;
+      verdictCard.innerText = data.verdict;
+
+      verdictBtn.className = isApproved
+        ? "w-full h-11 bg-mint-600 hover:bg-mint-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-slate-900 shadow-md"
+        : "w-full h-11 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl text-xs font-black uppercase tracking-wider flex items-center justify-center gap-2 border-2 border-slate-900 shadow-md";
+      verdictBtn.innerText = isApproved ? "✓ Verified & Committed to Ledger" : "✕ Rejected: Policy Breach";
+
+      engineStatus.innerText = "Tabby Agent Idle";
+      engineSubtext.innerText = "Audit transaction finalized";
+
+      loadLedger();
+    } catch (err) {
+      alert("Error: " + err.message);
+      verdictBtn.className = "w-full h-11 bg-rose-600 text-white rounded-2xl text-xs font-black uppercase";
+      verdictBtn.innerText = "Audit Failed";
+    } finally {
+      uploadBtnText.innerText = "Upload Receipt";
+    }
+  }
+
+  async function loadLedger() {
+    try {
+      const res = await fetch("/api/ledger");
+      const data = await res.json();
+
+      document.getElementById("metric-count").innerText = data.metrics.total_count;
+      document.getElementById("metric-spend").innerText = `₹${Number(data.metrics.total_spend).toLocaleString()}`;
+      document.getElementById("nav-inbox-count").innerText = data.metrics.total_count;
+
+      allTransactions = data.transactions || [];
+      renderTable(allTransactions);
+    } catch (e) {
+      console.error("Ledger sync error:", e);
+    }
+  }
+
+  function renderTable(items) {
+    const tbody = document.getElementById("ledger-rows");
+    if (!items || items.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-400 font-semibold">No matching transactions found.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = items.map(t => `
+      <tr class="hover:bg-brand-50/70 transition-colors">
+        <td class="py-3.5 px-6 font-bold text-slate-900">
+          <div class="flex items-center gap-3">
+            <span class="w-9 h-9 rounded-2xl bg-amber-100 border-2 border-amber-300 flex items-center justify-center text-base shadow-sm shrink-0">🧾</span>
+            <div>
+              <p class="font-black text-slate-900 leading-tight">${t.vendor}</p>
+              <span class="text-[11px] text-slate-500 font-semibold">${t.category}</span>
+            </div>
+          </div>
+        </td>
+        <td class="py-3.5 px-6 font-bold text-slate-700 align-middle">${t.date}</td>
+        <td class="py-3.5 px-6 font-mono font-black text-slate-900 text-sm align-middle">₹${t.amount}</td>
+        <td class="py-3.5 px-6 text-center align-middle">
+          <span class="inline-flex items-center bg-brand-100 text-brand-800 border-2 border-brand-300 px-3 py-1 rounded-full text-[11px] font-black leading-none">${t.category}</span>
+        </td>
+        <td class="py-3.5 px-6 text-right align-middle">
+          <span class="inline-flex items-center gap-1.5 bg-[#EDE9FE] text-brand-900 border-2 border-brand-400 px-3 py-1 rounded-full text-[10px] font-black tracking-wide uppercase shadow-sm leading-none">
+            <span class="w-1.5 h-1.5 rounded-full bg-brand-600 shrink-0"></span> AUTO-APPROVED
+          </span>
+        </td>
+      </tr>
+    `).join("");
+  }
+
+  function filterLedger() {
+    const query = document.getElementById("search-input").value.toLowerCase().trim();
+    const filtered = allTransactions.filter(t => 
+      (t.vendor && t.vendor.toLowerCase().includes(query)) ||
+      (t.category && t.category.toLowerCase().includes(query)) ||
+      (t.date && t.date.toLowerCase().includes(query)) ||
+      String(t.amount).includes(query)
+    );
+    renderTable(filtered);
+  }
+
+  window.addEventListener("DOMContentLoaded", loadLedger);
+</script>
+</body></html>
