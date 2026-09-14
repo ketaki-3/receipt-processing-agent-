@@ -8,8 +8,9 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
 from google.genai.errors import ClientError
-from extraction.extractor import extract_receipt
-from decision.agent import client, tools, types, run_tool
+from agent import client, run_tool
+from tools import tools
+from google.genai import types
 
 app = FastAPI(title="Tabby Expense Copilot")
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -47,43 +48,32 @@ async def audit_receipt(file: UploadFile):
         temp_path = tmp.name
 
     try:
-        # Step 1: Multimodal OCR
-        print(f"\n[1/3] Extracting metadata from {file.filename}...")
-        data = extract_receipt(temp_path)
-        print(f"Extracted payload: {data}")
-        
-        if not data:
-            return JSONResponse(
-                status_code=400,
-                content={"detail": "Multimodal OCR failed to parse receipt."}
-            )
+        with open(temp_path, "rb") as f:
+            image_bytes = f.read()
 
-        # Pause to prevent hitting the 5 RPM ceiling
-        time.sleep(2)
+        mime = "image/png" if ext.lower() == ".png" else "image/jpeg"
 
-        # Step 2: Agent Tool-Calling Loop
-        prompt = (
-            f"Process this incoming expense:\n"
-            f"Vendor: {data.get('vendor')}\nAmount: {data.get('amount')}\nDate: {data.get('date')}\nCategory: {data.get('category')}\n\n"
-            f"Instructions:\n"
-            f"1. Check if this is a duplicate.\n"
-            f"2. Check if it would exceed our {data.get('category')} budget.\n"
-            f"3. Check if this amount is an anomaly.\n"
-            f"4. If all checks pass, save the receipt using save_receipt. If any check fails, do NOT save and explain why."
-        )
-
-        print("[2/3] Calling Gemini agent decision loop...")
+        print("[1/2] Sending receipt to agent for extraction + decision...")
         chat = client.chats.create(
-            model="gemini-3.6-flash",
+            model="gemini-flash-lite-latest",
             config=types.GenerateContentConfig(
                 tools=tools,
                 temperature=0.1,
-                system_instruction="You are an autonomous financial auditor. Run requested tools sequentially. State final verdict.",
+                system_instruction=(
+                    "You are an autonomous financial receipt processing agent. "
+                    "First extract the receipt's data, then check for duplicates, budget, and anomalies. "
+                    "Always end with an explicit, complete sentence explaining whether the receipt was approved and saved or rejected and why."
+                ),
             ),
         )
 
-        response = chat.send_message(prompt)
+        response = chat.send_message([
+            "Extract this receipt's data, then run all checks and save if appropriate.",
+            types.Part.from_bytes(data=image_bytes, mime_type=mime),
+        ])
+
         checks_log = []
+        extracted_data = {}
 
         while response and response.function_calls:
             for fn in response.function_calls:
@@ -92,6 +82,9 @@ async def audit_receipt(file: UploadFile):
                 print(f" -> Executing Tool: {tool_name} with args: {tool_args}")
                 tool_output = run_tool(tool_name, tool_args)
 
+                if tool_name == "extract_receipt_data":
+                    extracted_data = tool_args
+
                 is_fail = any(w in str(tool_output).lower() for w in ["error", "exceeded", "duplicate found", "fail"])
                 checks_log.append({
                     "tool": tool_name,
@@ -99,7 +92,7 @@ async def audit_receipt(file: UploadFile):
                     "passed": not is_fail,
                 })
 
-                time.sleep(1.5)  # Guardrail spacing for rate limits
+                time.sleep(1.5)
                 response = chat.send_message(
                     types.Part.from_function_response(name=tool_name, response={"result": tool_output})
                 )
@@ -107,10 +100,10 @@ async def audit_receipt(file: UploadFile):
         verdict_text = response.text if response else "Audit complete."
         is_rejected = any(w in verdict_text.lower() for w in ["rejected", "not saved", "duplicate", "exceed", "failed"])
 
-        print("[3/3] Audit completed successfully.")
+        print("[2/2] Audit completed successfully.")
         return {
             "status": "REJECTED" if is_rejected else "APPROVED",
-            "extracted": data,
+            "extracted": extracted_data,
             "checks": checks_log,
             "verdict": verdict_text,
         }
@@ -120,7 +113,7 @@ async def audit_receipt(file: UploadFile):
         traceback.print_exc()
         return JSONResponse(
             status_code=429,
-            content={"detail": "Gemini API rate limit reached (5 requests/min). Please wait 15 seconds and re-try."}
+            content={"detail": "Gemini API rate limit reached. Please wait and re-try."}
         )
     except Exception as e:
         print("\n--- BACKEND EXCEPTION ---")
